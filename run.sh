@@ -79,7 +79,11 @@ fi
 echo "changelog=$OUTPUT" >>$GITHUB_OUTPUT
 
 # Set the version output to the version of the latest release
-echo "version=$(jq -r '.[0].version' $CONTEXT)" >>$GITHUB_OUTPUT
+if command -v jq &>/dev/null; then
+    echo "version=$(jq -r '.[0].version' $CONTEXT)" >>$GITHUB_OUTPUT
+else
+    echo "version=$(python3 -c "import json,sys; data=json.load(open(sys.argv[1])); print(data[0]['version'] if data else '')" "$CONTEXT")" >>$GITHUB_OUTPUT
+fi
 
 # Pass exit code to the next step
 echo "exit_code=$exit_code" >>$GITHUB_OUTPUT

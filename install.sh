@@ -58,11 +58,20 @@ else
         "${RELEASE_URL}")"
 fi
 
-TAG_NAME="$(echo "${RELEASE_INFO}" | jq --raw-output ".tag_name")"
+if command -v jq &>/dev/null; then
+    TAG_NAME="$(echo "${RELEASE_INFO}" | jq --raw-output ".tag_name")"
+else
+    TAG_NAME="$(echo "${RELEASE_INFO}" | python3 -c "import json,sys; print(json.load(sys.stdin)['tag_name'])")"
+fi
 TARGET="git-cliff-${TAG_NAME:1}-${ARCH}-${OS}.${ARCHIVE_EXT}"
-LOCATION="$(echo "${RELEASE_INFO}" |
-    jq --raw-output ".assets[].browser_download_url" |
-    grep "${TARGET}$")"
+if command -v jq &>/dev/null; then
+    LOCATION="$(echo "${RELEASE_INFO}" |
+        jq --raw-output ".assets[].browser_download_url" |
+        grep "${TARGET}$")"
+else
+    LOCATION="$(echo "${RELEASE_INFO}" | python3 -c $'import json,sys\nfor a in json.load(sys.stdin)[\'assets\']: print(a[\'browser_download_url\'])' |
+        grep "${TARGET}$")"
+fi
 echo "Found release: ${LOCATION}"
 
 # Create bin directory
